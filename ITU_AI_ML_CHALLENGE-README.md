@@ -1,4 +1,4 @@
-# Downlink Throughput Prediction — 🥈 2nd Place, ITU AI/ML in 5G Challenge 2023
+# Downlink Throughput Prediction — 2nd Place, ITU AI/ML in 5G Challenge 2023
 
 A PyTorch neural network that predicts cellular **downlink data rate** from radio measurements, network configuration, GPS and environmental context. It was built for the United Nations ITU AI/ML in 5G Challenge ("QoS Prediction," curated by Fraunhofer HHI) and **placed 2nd worldwide**.
 
@@ -27,26 +27,12 @@ Mobile networks can adapt ahead of time (to video bitrate, handovers, or vehicle
 | Step | Features added | Outcome |
 |---|---|---|
 | A | Primary-cell RSRP, RSRQ, RSSI, SNR | Starting point |
-| B | + Tx power, transport block size | ❌ Worse. Dropped |
-| C | + **Secondary-cell** signal metrics, downlink MCS, ping | ✅ **R² = 0.945**. Biggest single gain |
+| B | + Tx power, transport block size | Worse. Dropped |
+| C | + **Secondary-cell** signal metrics, downlink MCS, ping | **R² = 0.945**. Biggest single gain |
 | D | + Cell frequency and bandwidth | Small gain |
 | E | + Altitude, humidity, cloud cover, traffic density | **R² ≈ 0.95** (24 features) |
 
-The key insight was step C. Modern cells use carrier aggregation, so a device's throughput depends on *both* the primary and secondary cell. Adding the secondary cell's signal quality gave the largest improvement of any feature group. <!-- add the before/after R² here if you have it -->
-
-**5. Generalizing to new environments.** A random train/test split is optimistic for drive-test data, because neighbouring samples are nearly identical. For a harder test, I trained on one area type and predicted another (**park → avenue**). R² dropped to **[fill in]**. That's expected, and it's a more realistic measure of how the model would perform in a place it hasn't seen.
-
-## Results
-<!-- Export the key charts from your report into /figures -->
-<p align="center">
-  <img src="figures/correlation_heatmap.png" width="45%" />
-  <img src="figures/predicted_vs_actual.png" width="45%" />
-</p>
-
-| Evaluation | R² | MAE (Mbps) | MAPE |
-|---|---|---|---|
-| Random 80/20 split | 0.95 | [fill in] | [fill in] |
-| Cross-area (park → avenue) | [fill in] | [fill in] | [fill in] |
+The key insight was adding the secondary cell. Modern cells use carrier aggregation, so a device's throughput depends on *both* the primary and secondary cell. Adding the secondary cell's signal quality gave the largest improvement of any feature group.
 
 📄 **[Full report and slides](ITU_ML_Report.pdf)**
 
