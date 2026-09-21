@@ -1,23 +1,59 @@
-Author: Dhruv Kapur
-Problem Statement: https://challenge.aiforgood.itu.int/match/matchitem/80
+# Downlink Throughput Prediction — 2nd Place, ITU AI/ML in 5G Challenge 2023
 
-Initial steps and testing:
-	Starting off the challenge, the team used the code provided as a reference to create heatmaps to determine factors that would be relevant
-to predicting either uplink or downlink. Figure 1 displays the correlation of uplink and downlink with some physical layer parameters, and 
-Figure 2 displays the correlation between uplink and downlink of some GPS positioning features. 
+A PyTorch neural network that predicts cellular **downlink data rate** from radio measurements, network configuration, GPS and environmental context. It was built for the United Nations ITU AI/ML in 5G Challenge ("QoS Prediction," curated by Fraunhofer HHI) and **placed 2nd worldwide**.
 
+| | |
+|---|---|
+| **Result** | 2nd place globally · R² ≈ 0.95 on held-out data |
+| **Team** | Represented Shabodi (Summer 2023 internship) |
+| **My role** | Built the modelling pipeline and ran the feature experiments; wrote the evaluation report and presented the findings to the ITU |
+| **Stack** | Python · PyTorch · pandas · NumPy · scikit-learn · Matplotlib/Seaborn |
 
+---
 
+## The problem
+Mobile networks can adapt ahead of time (to video bitrate, handovers, or vehicle-to-everything services) only if they can *predict* the quality of service a user is about to get. The challenge used the **Berlin V2X** dataset: drive-test measurements from vehicles on two commercial operators' networks in Berlin. Each record includes primary- and secondary-cell radio metrics, GPS position, weather and traffic. The task was to predict the downlink throughput actually achieved, including in environments the model hasn't seen.
 
+## Approach
 
+**1. Exploratory analysis.** Correlation heatmaps against uplink and downlink rates showed that the physical-layer signal metrics (RSRP, RSSI, SNR) were strongly related to throughput. RSRQ was the weakest of the four. Raw GPS features showed almost no direct correlation.
 
+**2. Baseline.** A linear regression on primary-cell signal metrics fit poorly. That suggested the relationship is non-linear, so I moved to a neural network.
 
+**3. Model.** A feed-forward network with one 64-unit hidden layer and ReLU, trained with Adam on MSE loss. Two changes cut error substantially: scaling the target from bits/s to Mbps, and training on both operators together instead of separately.
 
+**4. Feature experiments.** I added feature groups one at a time and kept only those that improved held-out performance:
 
-As seen in these heatmaps, RSRP, RSSI, and SNR had high levels of correlation, with RSRQ having the lowest correlation with downlink of the four physical layer features that we tested. Looking at Figure 2, we noticed that there was not a lot of correlation between downlink or uplink of any of the selected features. Thus, for our initial testing we decided to examine the physical features. The first test that we completed was a linear regression between the physical features that we had examined using the primary cell data. Additionally, we decided to examine the relationship of the variables between operators, as we had done in the heatmaps in order to get a better understanding of the dataset during our initial testing results. This result was unexpected, and we continued to modify our model to fit our data. In order to get the best fit possible, we switched to using a neural network using the pytorch package. This, along with some other modifications allowed us to reduce the error greatly. Some of the modifications that we made were to convert the datarate cells from bits to megabits to reduce some of the error that we were getting. Additionally, we combined both operators within our machine learning process. Now that we had brought our error to a workable amount, we decided to start to try adding in more features to improve our neural network. 
+| Step | Features added | Outcome |
+|---|---|---|
+| A | Primary-cell RSRP, RSRQ, RSSI, SNR | Starting point |
+| B | + Tx power, transport block size | Worse. Dropped |
+| C | + **Secondary-cell** signal metrics, downlink MCS, ping | **R² = 0.945**. Biggest single gain |
+| D | + Cell frequency and bandwidth | Small gain |
+| E | + Altitude, humidity, cloud cover, traffic density | **R² ≈ 0.95** (24 features) |
 
-Feature testing:
-	Starting with our baseline, we decided to build off of the physical layer features to attempt to improve our neural network using our heatmaps as a foundation. We first began by examining the effect that the tx power and transport block size had on our neural network prediction model. We believed that tx power would be a good variable to add to our machine learning model because tx power directly affects the transmission signal. Additionally, the transport block contains many features within 5g networks, and is directly linked to both the transmission and receiving of data in 5g networks. As seen in Figure 5, this didn’t improve the model, and in fact led to the model decreasing in accuracy. Thus, we decided to look for other factors that could affect the downlink datarate. We then decided to include the data of the secondary cell to supplement our primary cell data.
-Figure 5: Neural Network with Physical Layer, Tx Power, and Transport Block Features
-This supplementation vastly improved our model, and from then on, we could use this model as our baseline for further feature testing. As seen in Figure 6, our model now had a R2 value of 0.945, which was sufficient to make the claim that the model was an accurate predictor of downlink datarates. For the model in Figure 6, we used both the primary and secondary cell RSRP, RSRQ, RSSI, and SNR, and also the average MCS for downlink of both cells. Additionally, we used the ping in milliseconds to help supplement our other features. In order to build upon this model, we started to test other features such as the frequency of both primary and secondary cells, to which we saw minor improvements such as a minor increase in our R2 value. After this breakthrough, we decided to focus on some of the GPS-based features such as the altitude, the humidity, as well as the traffic distance to improve our model as well as increase the number of features that we were using in our model. With an increase of our features to 20, we found a model with an R2 value of 0.95, thus for our purposes we can safely declare that this model is a reliable model to predict the downlink datarate. From here, we decided to test more features using the model depicted in figure 6 as our foundation. Our foundation then expanded to examine the key domains that would affect our results. It was determined through testing that for our model, using the area to determine downlink datarate was the best option, and thus we decided to predict the downlink datarate of an avenue by inputting the downlink datarate of a park. Unfortunately, this brought our R2 value down, but this was not necessarily a concern because we were trying to fit the model into a smaller dataset and more specifications for the model were being added by splitting the dataset in such a way. Thus even with a decrease in R2 value, our model could still be said to be a good fit for the data. 
-![image](https://github.com/dkapur2026/ITU_AI_ML_CHALLENGE/assets/146787306/ff6e9b5a-9920-4cb8-acb7-e026103fff97)
+The key insight was adding the secondary cell. Modern cells use carrier aggregation, so a device's throughput depends on *both* the primary and secondary cell. Adding the secondary cell's signal quality gave the largest improvement of any feature group.
+
+📄 **[Full report and slides](ITU_ML_Report.pdf)**
+
+## Repository layout
+```
+├── neural_network.py      # data prep, training, evaluation
+├── figures/               # heatmaps and result plots
+├── ITU_ML_Report.pdf      # report / presentation to the ITU
+└── requirements.txt
+```
+
+## Running it
+The Berlin V2X dataset is available from the challenge organizers and isn't included here.
+```bash
+pip install -r requirements.txt
+python neural_network.py --data path/to/cellular_dataframe.parquet
+```
+
+## What I'd do differently now
+- **Spatially grouped validation** everywhere, not just in the cross-area test, to avoid leakage between neighbouring samples
+- **Stronger tabular baselines** (XGBoost/LightGBM), which often match or beat MLPs on data like this
+- **Feature scaling and hyperparameter search.** The network used raw feature scales and a fixed architecture
+- **Feature importance** (SHAP or permutation) to replace one-at-a-time ablations
+- **Temporal context**: throughput is autocorrelated, so recent history is a strong predictor
