@@ -11,7 +11,7 @@ A PyTorch neural network that predicts cellular **downlink data rate** from radi
 
 ---
 
-## The problem
+## The problem: https://challenge.aiforgood.itu.int/match/matchitem/80
 Mobile networks can adapt ahead of time (to video bitrate, handovers, or vehicle-to-everything services) only if they can *predict* the quality of service a user is about to get. The challenge used the **Berlin V2X** dataset: drive-test measurements from vehicles on two commercial operators' networks in Berlin. Each record includes primary- and secondary-cell radio metrics, GPS position, weather and traffic. The task was to predict the downlink throughput actually achieved, including in environments the model hasn't seen.
 
 ## Approach
@@ -34,22 +34,11 @@ Mobile networks can adapt ahead of time (to video bitrate, handovers, or vehicle
 
 The key insight was adding the secondary cell. Modern cells use carrier aggregation, so a device's throughput depends on *both* the primary and secondary cell. Adding the secondary cell's signal quality gave the largest improvement of any feature group.
 
+**5. Generalization to New Environments.** A random train/test split is optimistic for drive-test data, because neighbouring samples are nearly identical. For a harder test, I trained on one area type and predicted another, i.e., park → avenue. This creates a more realistic measure of how the model would perform in a place it hasn't seen.
+
 📄 **[Full report and slides](ITU_ML_Report.pdf)**
 
-## Repository layout
-```
-├── neural_network.py      # data prep, training, evaluation
-├── figures/               # heatmaps and result plots
-├── ITU_ML_Report.pdf      # report / presentation to the ITU
-└── requirements.txt
-```
 
-## Running it
-The Berlin V2X dataset is available from the challenge organizers and isn't included here.
-```bash
-pip install -r requirements.txt
-python neural_network.py --data path/to/cellular_dataframe.parquet
-```
 
 ## What I'd do differently now
 - **Spatially grouped validation** everywhere, not just in the cross-area test, to avoid leakage between neighbouring samples
